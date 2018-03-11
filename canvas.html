@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script language="JavaScript" type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<div><canvas id="canvas" width="500" height="500"></canvas></div>
+<script language="JavaScript" type="text/javascript">
+var ctx = $('#canvas')[0].getContext("2d");
+var i = 0;
+//draw a circle
+ctx.rotate(Math.PI/4);
+ctx.translate(350,0);
+ctx.save();
+ctx.save();
+ctx.translate(0,100);
+ctx.fillStyle = "rgb(150,150,150)";
+drawTriangle();
+ctx.restore();
+ctx.rotate(Math.PI);
+ctx.translate(0,-100);
+ctx.fillStyle = "#000000";
+drawTriangle();
+
+setInterval(()=>{
+ctx.rotate(Math.PI/180), 
+i++;
+
+if (i==180) ctx.save();
+
+ctx.clearRect(0,-2, 500, 500); 
+drawTriangle();
+ctx.restore();
+
+if (i==360) i = 0;}, 10);
+
+function drawTriangle() {
+ ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(200,0);
+  ctx.lineTo(0,100);
+  ctx.closePath();
+  ctx.fill();
+}
+</script>
+</body>
+</html>

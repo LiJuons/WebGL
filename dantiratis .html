@@ -1,0 +1,69 @@
+<html>
+<head>
+<title>Dantiratis</title>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+</head>
+<body bgcolor="grey" text="#000000">
+
+
+<canvas id="canvas" width="500" height="400" style="background-color:white"></canvas>
+<script>
+	var ctx;
+	var j = 0;
+
+	function init() {
+		ctx = $('#canvas')[0].getContext("2d");
+		
+		return setInterval(() => {
+			ctx.clearRect(0, 0, 500, 400);
+
+			drawScrew(100, 100, 18, 80, 65, j, "#669999"); //melyna
+			drawScrew(218, 63, 14, 50, 38, -j * 18/14, "#666699"); //violetine
+			drawScrew(302, 68, 9, 40, 28, j * 2, "#2f7a3d"); //zalia
+			drawScrew(186, 223, 18, 80, 65, -j, "#dbe554"); //geltona
+			drawScrew(295, 228.5, 9, 37.6, 25, j * 2, "#7a5a2f"); //ruda
+			drawScrew(373, 153, 18, 78, 65, -j, "#ce6969"); //rausva
+
+			j+=0.02;
+		}, 50);
+	}
+
+	function drawScrew(cx, cy, spikes, outerRadius, innerRadius, angle, color) {
+		var rot = Math.PI / 2 * 3 + angle;
+		var x = cx;
+		var y = cy;
+		var step = Math.PI / spikes;
+
+		ctx.strokeSyle = "#000";
+		ctx.beginPath();
+		for (i = 0; i < spikes; i++) {
+			x = cx + Math.cos(rot) * outerRadius;
+			y = cy + Math.sin(rot) * outerRadius;
+			ctx.lineTo(x, y)
+			rot += step
+
+			x = cx + Math.cos(rot) * innerRadius;
+			y = cy + Math.sin(rot) * innerRadius;
+			ctx.lineTo(x, y)
+			rot += step
+		}
+		ctx.closePath();
+		ctx.lineWidth = 5;
+		ctx.strokeStyle = 'black';
+		ctx.stroke();
+		ctx.fillStyle = color;
+		ctx.fill();
+
+		ctx.beginPath();
+		ctx.arc(cx, cy, 5, 0, Math.PI * 2, true);
+		ctx.closePath();
+		ctx.stroke();
+		ctx.fillStyle = "white";
+		ctx.fill();
+	}
+
+	init();
+</script>
+</body>
+</html>
