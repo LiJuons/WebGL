@@ -56,35 +56,23 @@
         // add the plane to the scene
         scene.add(plane);
 
-        // create a cube
+        // create a cube (step)
         var cubeGeometry = new THREE.CubeGeometry(3,1,8);
         var cubeMaterial = new THREE.MeshLambertMaterial({color: 0xff0000});
 
-        var step1 = new THREE.Mesh(cubeGeometry, cubeMaterial);
-        step1.castShadow = true;
+        var step = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        step.castShadow = true;
 
-        //SET THE NUMBER OF STEPS HERE:
+        //SET INITIAL VALUES
         var NUMBER_OF_STEPS = 16;
+        var angle = 0;
+        var angleNew = 18;
+
+        var stop = 0;
 
         var x = 0;
         var y = 0.5;
         var z = 3;
-        var angle = 0;
-
-        // position the cube
-        step1.position.x=x;
-        step1.position.y=y;
-        step1.position.z=z;
-        scene.add(step1);
-
-        for(i=1; i<NUMBER_OF_STEPS; i++){
-          angle += Math.PI / 10;
-          x+=Math.cos(angle);//-0.12;
-          y+=1;
-          z+=Math.sin(-angle);//-0.12;
-          addStep(x,y,z, angle);
-        };
-
 
         // position and point the camera to the center of the scene
         camera.position.x = -30;
@@ -101,11 +89,57 @@
         // add the output of the renderer to the html element
         $("#WebGL-output").append(renderer.domElement);
 
-        // call the render function
-        renderer.render(scene, camera);
+        var controls = new function() {
+            this.STEPS_NUM = 16;
+            this.ANGLE = 18;
+        }
+
+        var gui = new dat.GUI();
+        gui.add(controls, 'STEPS_NUM',1,30);
+        gui.add(controls, 'ANGLE',0,45);
+
+
+        render();
+
+        function render() {
+
+            if (Math.round(controls.STEPS_NUM) != NUMBER_OF_STEPS || Math.round(controls.ANGLE) != angleNew) {
+              NUMBER_OF_STEPS = Math.round(controls.STEPS_NUM);
+              angleNew = Math.round(controls.ANGLE);
+
+              //Clear scene
+              while(scene.children.length > 3){
+                  scene.remove(scene.children[3]);
+              }
+
+              //RESET VALUES
+              stop = 0;
+              angle = 0;
+
+              x = 0;
+              y = 0.5;
+              z = 3;
+            }
+
+            if (stop != 1)
+              for(i=0; i<NUMBER_OF_STEPS; i++){
+                addStep(x,y,z, angle);
+
+                angle += Math.PI/180 * angleNew;
+                x+=Math.cos(angle);
+                y+=1;
+                z+=Math.sin(-angle);
+
+                stop = 1;
+              };
+
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+
 
         function addStep(x,y,z, angle) {
-          var newStep= step1.clone();
+          var newStep= step.clone();
           // position the step
           newStep.position.x=x;
           newStep.position.y=y;
