@@ -17,7 +17,6 @@
     </style>
 </head>
 <body>
-
 <!-- Div which will hold the Output -->
 <div id="WebGL-output">
 </div>
@@ -56,16 +55,18 @@
         // add the plane to the scene
         scene.add(plane);
 
-        // create a cube
+        // create a cube (step)
         var cubeGeometry = new THREE.CubeGeometry(4,1,4);
         var cubeMaterial = new THREE.MeshLambertMaterial({color: 0xff0000});
 
         var step1 = new THREE.Mesh(cubeGeometry, cubeMaterial);
         step1.castShadow = true;
 
-        //SET THE NUMBER OF STEPS HERE:
+        //SET INITIAL VALUES
         var NUMBER_OF_STEPS = 12;
-        var turn = 8; //How often steps turn
+        var turn = 8;
+        var stop = 0;
+        var i = 1;
 
         var x = -12;
         var y = 0.5;
@@ -74,35 +75,11 @@
         var plusy = 1;
         var plusz = 0;
 
-        // position the cube
+        // position the first step
         step1.position.x=x;
         step1.position.y=y;
         step1.position.z=z;
         scene.add(step1);
-
-        for(i=0; i<NUMBER_OF_STEPS; i++){
-          if (i % turn == 0 && i != 0) {
-            plusx = 0;
-            plusz = 3;
-            if (i % (2*turn) == 0) {
-              plusx = -3;
-              plusz = 0;
-            }
-            if (i % (3*turn) == 0) {
-              plusx = 0;
-              plusz = -3;
-            }
-            if (i % (4*turn) == 0) {
-              plusx = 3;
-              plusz = 0;
-            }
-          }
-          x+=plusx;
-          y+=plusy;
-          z+=plusz;
-          addStep(x,y,z);
-        };
-
 
         // position and point the camera to the center of the scene
         camera.position.x = -30;
@@ -119,8 +96,70 @@
         // add the output of the renderer to the html element
         $("#WebGL-output").append(renderer.domElement);
 
-        // call the render function
-        renderer.render(scene, camera);
+        var controls = new function() {
+            this.STEPS_NUM = 12;
+            this.TURN_AFTER = 10;
+        }
+
+        var gui = new dat.GUI();
+        gui.add(controls, 'STEPS_NUM',1,18);
+        gui.add(controls, 'TURN_AFTER',3,18);
+
+
+        render();
+
+        function render() {
+
+            if (Math.round(controls.STEPS_NUM) != NUMBER_OF_STEPS || Math.round(controls.TURN_AFTER) != turn) {
+              NUMBER_OF_STEPS = Math.round(controls.STEPS_NUM);
+              turn = Math.round(controls.TURN_AFTER);
+
+              //Clear scene
+              while(scene.children.length > 4){
+                  scene.remove(scene.children[4]);
+              }
+
+              //RESET VALUES
+              stop = 0;
+              i=1;
+
+              x = -12;
+              y = 0.5;
+              z = -3;
+
+              plusx = 3;
+              plusy = 1;
+              plusz = 0;
+            }
+
+            if (stop != 1)
+              for(i=1; i<NUMBER_OF_STEPS; i++){
+                if (i % turn == 0 && i != 0) {
+                  plusx = 0;
+                  plusz = 3;
+                  if (i % (2*turn) == 0) {
+                    plusx = -3;
+                    plusz = 0;
+                  }
+                  if (i % (3*turn) == 0) {
+                    plusx = 0;
+                    plusz = -3;
+                  }
+                  if (i % (4*turn) == 0) {
+                    plusx = 3;
+                    plusz = 0;
+                  }
+                }
+                x+=plusx;
+                y+=plusy;
+                z+=plusz;
+                addStep(x,y,z);
+                stop = 1;
+              };
+
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
 
         function addStep(x,y,z) {
           var newStep= step1.clone();
