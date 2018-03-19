@@ -80,6 +80,18 @@
           if (i % 8 == 0 && i != 0) {
             plusx = 0;
             plusz = 3;
+            if (i % 16 == 0) {
+              plusx = -3;
+              plusz = 0;
+            }
+            if (i % 24 == 0) {
+              plusx = 0;
+              plusz = -3;
+            }
+            if (i % 32 == 0) {
+              plusx = 3;
+              plusz = 0;
+            }
           }
           x+=plusx;
           y+=plusy;
