@@ -63,6 +63,9 @@
         var step1 = new THREE.Mesh(cubeGeometry, cubeMaterial);
         step1.castShadow = true;
 
+        //SET THE NUMBER OF STEPS HERE:
+        var NUMBER_OF_STEPS = 12;
+
         var x = -12;
         var y = 0.5;
         var z = -3;
@@ -76,7 +79,7 @@
         step1.position.z=z;
         scene.add(step1);
 
-        for(i=0; i<12; i++){
+        for(i=0; i<NUMBER_OF_STEPS; i++){
           if (i % 8 == 0 && i != 0) {
             plusx = 0;
             plusz = 3;
