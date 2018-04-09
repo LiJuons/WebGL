@@ -8,6 +8,7 @@
     <script type="text/javascript" src="libs/jquery-1.9.0.js"></script>
     <script type="text/javascript" src="libs/stats.js"></script>
     <script type="text/javascript" src="libs/dat.gui.js"></script>
+    <script type="text/javascript" src="libs/OrbitControls.js"></script>
     <style>
         body{
             /* set margin to 0 and overflow to hidden, to go fullscreen */
@@ -33,6 +34,10 @@
 
         // create a camera, which defines where we're looking at.
         var camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        var camcontrols = new THREE.OrbitControls( camera );
+        camera.position.set( 0, 20, 40 );
+        camcontrols.update();
 
         // create a render and set the size
         var renderer = new THREE.WebGLRenderer();
@@ -116,12 +121,6 @@
         var sy = 1;
         var sz = 7;
 
-        // position and point the camera to the center of the scene
-        camera.position.x = -20;
-        camera.position.y = 20;
-        camera.position.z = 20;
-        camera.lookAt(scene.position);
-
         // add spotlight for the shadows
         var spotLight = new THREE.SpotLight( 0xffffff );
         spotLight.position.set( -40, 60, -10 );
@@ -134,25 +133,16 @@
         var controls = new function() {
             this.STEPS_NUM = 16;
             this.ANGLE = 18;
-            this.cameraX = 0;
-            this.cameraY = 10;
-            this.cameraZ = 15;
         }
 
         var gui = new dat.GUI();
         gui.add(controls, 'STEPS_NUM',1,30);
         gui.add(controls, 'ANGLE',0,45);
-        gui.add(controls, 'cameraX',-40,40);
-        gui.add(controls, 'cameraY',-40,40);
-        gui.add(controls, 'cameraZ',-40,40);
 
         render();
 
         function render() {
 
-            camera.position.x = controls.cameraX;
-            camera.position.y = controls.cameraY;
-            camera.position.z = controls.cameraZ;
             if (Math.round(controls.STEPS_NUM) != NUMBER_OF_STEPS || Math.round(controls.ANGLE) != angleNew) {
               NUMBER_OF_STEPS = Math.round(controls.STEPS_NUM);
               angleNew = Math.round(controls.ANGLE);
@@ -196,6 +186,7 @@
               };
 
             requestAnimationFrame(render);
+            camcontrols.update();
             renderer.render(scene, camera);
         }
 
@@ -235,7 +226,42 @@
         }
     });
 
+    function onDocumentMouseMove( event ) {
 
+          event.preventDefault();
+
+          if ( isMouseDown ) {
+
+              theta = - ( ( event.clientX - onMouseDownPosition.x ) * 0.5 )
+                      + onMouseDownTheta;
+              phi = ( ( event.clientY - onMouseDownPosition.y ) * 0.5 )
+                    + onMouseDownPhi;
+
+              phi = Math.min( 180, Math.max( 0, phi ) );
+
+              camera.position.x = radious * Math.sin( theta * Math.PI / 360 )
+                                  * Math.cos( phi * Math.PI / 360 );
+              camera.position.y = radious * Math.sin( phi * Math.PI / 360 );
+              camera.position.z = radious * Math.cos( theta * Math.PI / 360 )
+                                  * Math.cos( phi * Math.PI / 360 );
+              camera.updateMatrix();
+
+          }
+
+          mouse3D = projector.unprojectVector(
+              new THREE.Vector3(
+                  ( event.clientX / renderer.domElement.width ) * 2 - 1,
+                  - ( event.clientY / renderer.domElement.height ) * 2 + 1,
+                  0.5
+                  ),
+              camera
+          );
+          ray.direction = mouse3D.subSelf( camera.position ).normalize();
+
+          interact();
+          render();
+
+      }
 
 </script>
 </body>
