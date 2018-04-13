@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Laiptai su Tureklais</title>
+    <script type="text/javascript" src="libs/three.js"></script>
+    <script type="text/javascript" src="libs/jquery-1.9.0.js"></script>
+    <script type="text/javascript" src="libs/stats.js"></script>
+    <script type="text/javascript" src="libs/dat.gui.js"></script>
+    <script type="text/javascript" src="libs/OrbitControls.js"></script>
+    <style>
+        body{
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+
+
+    // once everything is loaded, we run our Three.js stuff.
+    $(function () {
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        var camcontrols = new THREE.OrbitControls( camera );
+        camera.position.set( 0, 20, 30 );
+        camcontrols.update();
+
+        // create a render and set the size
+        var renderer = new THREE.WebGLRenderer();
+
+        renderer.setClearColorHex(0xEEEEEE, 1.0);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMapEnabled = true;
+
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(60,20);
+        var planeMaterial =    new THREE.MeshLambertMaterial({color: 0xffffff});
+        var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+        plane.receiveShadow  = true;
+
+        // rotate and position the plane
+        plane.rotation.x=-0.5*Math.PI;
+        plane.position.x=15
+        plane.position.y=0
+        plane.position.z=0
+
+        // add the plane to the scene
+        scene.add(plane);
+
+        // create a cube
+        var cubeGeometry;;
+        var cubeMaterial;
+        var cube;
+
+	      var mesh;
+
+
+        // add spotlight for the shadows
+        var spotLight = new THREE.SpotLight( 0xffffff );
+        spotLight.position.set( -40, 60, -10 );
+        spotLight.castShadow = true;
+        scene.add( spotLight );
+
+
+
+
+        // call the render function
+         //GUI--------------------------------
+
+	    $("#WebGL-output").append(renderer.domElement);
+
+	    var controls = new function() {
+    			this.Steps = 5;
+          this.Angle = 0;
+    			this.length = 4;
+    			this.width = 8;
+    			this.color="#952bac";
+      }
+
+      var gui = new dat.GUI();
+  		gui.add(controls, 'Steps',1,22);
+  		gui.add(controls, 'Angle',0,90);
+  		gui.add(controls, 'length',1,10)
+  		gui.add(controls, 'width',1,10);
+
+		var group;
+
+    var cubeMaterial = new THREE.MeshLambertMaterial({color: 'red'});
+    var tubeMaterial = new THREE.MeshLambertMaterial({color: 0xffff00, transparent: false});
+
+
+    var temp = 0;
+		render();
+
+        function render() {
+    			if(group!=null){
+    				scene.remove(group);
+    			}
+    			group = new THREE.Object3D();
+
+    			var height = controls.Steps;
+    			var length = controls.length;
+    			var width = controls.width;
+    			var rotationAngle = controls.Angle;
+    			var selectedColor = 'red';
+
+    			var cubeGeometry = new THREE.CubeGeometry(length,1,width);
+
+    			var merged;
+
+
+
+    			var combined = new THREE.Geometry();
+
+    				var step, stair, spindle, steps_con;
+            var spoints, cpoints;
+            var ox, oy, oz;
+
+    				var numOfStairs = height;
+    				y = 1/2;
+    				angle = 0;
+            var temp = 0;
+
+    					for (var i = 0; i < numOfStairs; i++) {
+                //STEP creation
+    						stair = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    						stair.castShadow = true;
+
+    						stair.position.x=length/2+temp;
+    						stair.position.y=y;
+    						y = y + 2;
+    						stair.position.z=width/2;
+
+                var iks = Math.cos(((angle+rotationAngle) * Math.PI / 180));
+                var ygr = Math.sin(-((angle+rotationAngle) * Math.PI / 180));
+
+                //STEPS construct
+                cpoints = [];
+                cpoints.push(new THREE.Vector3(length/2+temp,y-1.5,width/2));
+                cpoints.push(new THREE.Vector3(length/2+temp,y-4.5,width/2));
+                cpoints.push(new THREE.Vector3(length/2+temp-2,y-5,width/2));
+
+                var zpindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(cpoints), 20, 0.21, 8, false);
+                steps_con = new THREE.Mesh(zpindleGeometry, tubeMaterial);
+                steps_con.castShadow = true;
+
+
+                //SPINDLE creation
+                spoints = [];
+                spoints.push(new THREE.Vector3(length/2+temp,y-2,width-0.3));
+                spoints.push(new THREE.Vector3(length/2+temp,y+4,width-0.3));
+
+                var spindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(spoints), 20, 0.21, 8, false);
+                spindle = new THREE.Mesh(spindleGeometry, tubeMaterial);
+                spindle.castShadow = true;
+
+
+                //RAIL creation
+                // points.push(new THREE.Vector3(rx,ry,rz));
+                // var tubeGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(points), 20, 0.21, 8, false);
+                // var rail = new THREE.Mesh(tubeGeometry, tubeMaterial);
+                // rail.castShadow = true;
+
+
+                //Translation
+                var c = -length/2 - iks;
+                stair.translateX(c);
+                spindle.translateX(c);
+                steps_con.translateX(c);
+
+                var d = -width/2 - ygr;
+                stair.translateZ(d);
+                spindle.translateZ(d);
+                steps_con.translateZ(d);
+
+
+                //First addition
+                step = new THREE.Object3D();
+    						step.add(stair);
+                step.add(spindle);
+                step.add(steps_con);
+
+
+                //Rotation
+                step.rotation.y=(angle * Math.PI / 180);
+                angle = angle + rotationAngle;
+
+                //Final addition
+    						group.add(step);
+                temp+=2;
+
+    					}
+
+    				scene.add(group);
+
+    			// render
+
+    			requestAnimationFrame( render );
+    			camcontrols.update();
+          renderer.render( scene, camera );
+	      }
+
+    });
+
+
+</script>
+</body>
+</html>
