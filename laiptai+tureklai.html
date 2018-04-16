@@ -64,112 +64,94 @@
         // add the plane to the scene
         scene.add(plane);
 
-        // create a cube
-        var cubeGeometry;;
-        var cubeMaterial;
-        var cube;
-
-
         // add spotlight for the shadows
         var spotLight = new THREE.SpotLight( 0xffffff );
         spotLight.position.set( -40, 60, -10 );
         spotLight.castShadow = true;
         scene.add( spotLight );
 
-
-
-
         // call the render function
-         //GUI--------------------------------
+  	    $("#WebGL-output").append(renderer.domElement);
 
-	    $("#WebGL-output").append(renderer.domElement);
+  	    var controls = new function() {
+      			this.Steps = 10;
+            this.Angle = 0;
+      			this.Height = this.Steps;
+        }
 
-	    var controls = new function() {
-    			this.Steps = 10;
-          this.Angle = 0;
-    			this.Height = this.Steps;
-      }
+        var gui = new dat.GUI();
+    		gui.add(controls, 'Steps',1,25);
+    		gui.add(controls, 'Angle',-360, 360);
+    		gui.add(controls, 'Height',1,30);
 
-      var gui = new dat.GUI();
-  		gui.add(controls, 'Steps',1,25);
-  		gui.add(controls, 'Angle',-360, 360);
-  		gui.add(controls, 'Height',0,30);
+    		var group, stair;
 
-		var group, stair;
+        var tubeMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
+        var plateMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
+        var plateGeometry = new THREE.CubeGeometry(5,0.5,1);
 
-    var tubeMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
-    var plateMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
-    var plateGeometry = new THREE.CubeGeometry(5,0.5,1);
+        function drawStair() {
 
+            stair = new THREE.Shape();
 
+            stair.moveTo( 0,0 );
+            stair.bezierCurveTo(0,0,8,4,8,0);
+            stair.lineTo( 8, -2 );
+            stair.lineTo( 0, -2 );
+            stair.lineTo( 0, 0 );
 
+            return stair;
+        }
 
+        function drawStair2() {
 
-    function drawStair() {
+            stair = new THREE.Shape();
 
-          stair = new THREE.Shape();
+            stair.moveTo( 0,0 );
+            stair.bezierCurveTo(0,0,0,4,8,0);
+            stair.lineTo( 8, -2 );
+            stair.lineTo( 0, -2 );
+            stair.lineTo( 0, 0 );
 
-          stair.moveTo( 0,0 );
-          stair.bezierCurveTo(0,0,8,4,8,0);
-          stair.lineTo( 8, -2 );
-          stair.lineTo( 0, -2 );
-          stair.lineTo( 0, 0 );
+            return stair;
+        }
 
-          return stair;
-      }
+        var extrudeSettings = {
+            steps: 10,
+            amount: 1,
+            curveSegments: 10,
+            bevelEnabled: false,
+            bevelThickness: 1,
+            bevelSize: 1,
+            bevelSegments: 1
+        };
 
-      function drawStair2() {
-
-          stair = new THREE.Shape();
-
-          stair.moveTo( 0,0 );
-          stair.bezierCurveTo(0,0,0,4,8,0);
-          stair.lineTo( 8, -2 );
-          stair.lineTo( 0, -2 );
-          stair.lineTo( 0, 0 );
-
-          return stair;
-      }
-
-      var extrudeSettings = {
-          steps: 10,
-          amount: 1,
-          curveSegments: 10,
-          bevelEnabled: false,
-          bevelThickness: 1,
-          bevelSize: 1,
-          bevelSegments: 1
-      };
-
-    var extrudeGeometry = new THREE.ExtrudeGeometry(drawStair(), extrudeSettings);
-          var extrudeGeometry2 = new THREE.ExtrudeGeometry(drawStair2(), extrudeSettings);
-          var extrudeMaterial = new THREE.MeshLambertMaterial({color: 0xf69f57});
+      var extrudeGeometry = new THREE.ExtrudeGeometry(drawStair(), extrudeSettings);
+            var extrudeGeometry2 = new THREE.ExtrudeGeometry(drawStair2(), extrudeSettings);
+            var extrudeMaterial = new THREE.MeshLambertMaterial({color: 0xf69f57});
 
 
-		render();
+  		render();
 
-        function render() {
-    			if(group!=null){
-    				scene.remove(group);
-            scene.remove(tube);
-            scene.remove(plane2);
-            scene.remove(fspindle);
-    			}
-    			group = new THREE.Object3D();
+          function render() {
+      			if(group!=null){
+      				scene.remove(group);
+              scene.remove(tube);
+              scene.remove(plane2);
+              scene.remove(fspindle);
+      			}
+      			group = new THREE.Object3D();
 
-          var totalHeight = controls.Height;
-    			var height = controls.Steps;
-          totalHeight/=height;
+            var totalHeight = controls.Height;
+      			var height = controls.Steps;
+            totalHeight/=height;
 
-    			var length = 4;
-    			var width = 8;
-    			var rotationAngle = controls.Angle;
-          rotationAngle/=height;
+      			var length = 4;
+      			var width = 8;
+      			var rotationAngle = controls.Angle;
+            rotationAngle/=height;
 
-    			var cubeGeometry = new THREE.CubeGeometry(length,1,width);
-
-
-    			var combined = new THREE.Geometry();
+      			var cubeGeometry = new THREE.CubeGeometry(length,1,width);
 
     				var step, stairs, spindle, steps_con, plate, rail;
             var spoints, cpoints;
@@ -188,10 +170,6 @@
 
 
     					for (var i = 0; i < numOfStairs; i++) {
-                //STEP creation
-                // stair = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    						// stair.castShadow = true;
-
                 xPOS = 4;
                 zPOS = width/2;
 
@@ -208,7 +186,7 @@
                 stairs.position.y=y+3.5;
                 stairs.position.z=zPOS;
 
-                //STEPS construct
+                //Stairs supportive construct
                 cpoints = [];
                 cpoints.push(new THREE.Vector3(xPOS, y-0.5, zPOS));
                 cpoints.push(new THREE.Vector3(xPOS, y-0.75-totalHeight, zPOS));
@@ -269,10 +247,8 @@
                 step.add(p2);
                 if (i!=0) step.add(spindle);
 
-
                 // var Axes = new THREE.AxisHelper( 4 );
                 // step.add(Axes);
-
 
                 //Rotation
                 if (vector) {
@@ -296,33 +272,32 @@
                 //Final addition
     						group.add(step);
                 if (totalHeight) temp = temp + totalHeight;
-                else
-                  temp+=2;
+                else temp+=2;
     					}
 
-    				scene.add(group);
+      				scene.add(group);
 
-            //Add rail
-            spoints = [];
+              //Add rail
+              spoints = [];
 
-            if (angle<0) {
-              spoints.push(new THREE.Vector3(4,0.5,-zPOS+0.3));
-              spoints.push(new THREE.Vector3(5,7,-zPOS+0.3));
+              if (angle<0) {
+                spoints.push(new THREE.Vector3(4,0.5,-zPOS+0.3));
+                spoints.push(new THREE.Vector3(5,7,-zPOS+0.3));
 
-              points.shift();
-              points.unshift(new THREE.Vector3(5,7,-zPOS+0.3));
-              points.unshift(new THREE.Vector3(2,5,-zPOS+0.3));
-              points.unshift(new THREE.Vector3(2,4,-zPOS+0.3));
-            }
-            else {
-              spoints.push(new THREE.Vector3(5,0.5,zPOS-0.3));
-              spoints.push(new THREE.Vector3(5,7,zPOS-0.3));
+                points.shift();
+                points.unshift(new THREE.Vector3(5,7,-zPOS+0.3));
+                points.unshift(new THREE.Vector3(2,5,-zPOS+0.3));
+                points.unshift(new THREE.Vector3(2,4,-zPOS+0.3));
+              }
+              else {
+                spoints.push(new THREE.Vector3(5,0.5,zPOS-0.3));
+                spoints.push(new THREE.Vector3(5,7,zPOS-0.3));
 
-              points.shift();
-              points.unshift(new THREE.Vector3(5,7,zPOS-0.3));
-              points.unshift(new THREE.Vector3(2,5,zPOS-0.3));
-              points.unshift(new THREE.Vector3(2,4,zPOS-0.3));
-            }
+                points.shift();
+                points.unshift(new THREE.Vector3(5,7,zPOS-0.3));
+                points.unshift(new THREE.Vector3(2,5,zPOS-0.3));
+                points.unshift(new THREE.Vector3(2,4,zPOS-0.3));
+              }
 
             //add first spindle
             var spindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(spoints), 20, 0.21, 8, false);
@@ -361,12 +336,11 @@
 
             scene.add(plane2);
 
-    			// render
-
-    			requestAnimationFrame( render );
-    			camcontrols.update();
-          renderer.render( scene, camera );
-	      }
+      			// render
+      			requestAnimationFrame( render );
+      			camcontrols.update();
+            renderer.render( scene, camera );
+         }
 
     });
 
