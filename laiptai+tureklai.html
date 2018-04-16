@@ -39,7 +39,7 @@
         var camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
 
         var camcontrols = new THREE.OrbitControls( camera );
-        camera.position.set( 30, 40, 40 );
+        camera.position.set( 10, 40, 40 );
         camcontrols.update();
 
         // create a render and set the size
@@ -87,27 +87,65 @@
 	    var controls = new function() {
     			this.Steps = 10;
           this.Angle = 0;
-    			this.length = 4;
-    			this.width = 8;
-    			this.color="#952bac";
+    			this.Height = this.Steps;
       }
 
       var gui = new dat.GUI();
   		gui.add(controls, 'Steps',1,25);
-  		gui.add(controls, 'Angle',-50, 50);
-  		gui.add(controls, 'length',1,10)
-  		gui.add(controls, 'width',1,10);
+  		gui.add(controls, 'Angle',-360, 360);
+  		gui.add(controls, 'Height',0,30);
 
-		var group;
+		var group, stair;
 
-    var cubeMaterial = new THREE.MeshLambertMaterial({color: 'red'});
-    var tubeMaterial = new THREE.MeshLambertMaterial({color: 0xffff00, transparent: false});
-    var plateMaterial = new THREE.MeshLambertMaterial({color: 0xffd700});
-    var plateGeometry = new THREE.CubeGeometry(5,0.5,2);
+    var tubeMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
+    var plateMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
+    var plateGeometry = new THREE.CubeGeometry(5,0.5,1);
 
 
-    var temp = 0;
-    var tempZ = 0;
+
+
+
+    function drawStair() {
+
+          stair = new THREE.Shape();
+
+          stair.moveTo( 0,0 );
+          stair.bezierCurveTo(0,0,8,4,8,0);
+          stair.lineTo( 8, -2 );
+          stair.lineTo( 0, -2 );
+          stair.lineTo( 0, 0 );
+
+          return stair;
+      }
+
+      function drawStair2() {
+
+          stair = new THREE.Shape();
+
+          stair.moveTo( 0,0 );
+          stair.bezierCurveTo(0,0,0,4,8,0);
+          stair.lineTo( 8, -2 );
+          stair.lineTo( 0, -2 );
+          stair.lineTo( 0, 0 );
+
+          return stair;
+      }
+
+      var extrudeSettings = {
+          steps: 10,
+          amount: 1,
+          curveSegments: 10,
+          bevelEnabled: false,
+          bevelThickness: 1,
+          bevelSize: 1,
+          bevelSegments: 1
+      };
+
+    var extrudeGeometry = new THREE.ExtrudeGeometry(drawStair(), extrudeSettings);
+          var extrudeGeometry2 = new THREE.ExtrudeGeometry(drawStair2(), extrudeSettings);
+          var extrudeMaterial = new THREE.MeshLambertMaterial({color: 0xf69f57});
+
+
 		render();
 
         function render() {
@@ -115,26 +153,30 @@
     				scene.remove(group);
             scene.remove(tube);
             scene.remove(plane2);
+            scene.remove(fspindle);
     			}
     			group = new THREE.Object3D();
 
+          var totalHeight = controls.Height;
     			var height = controls.Steps;
-    			var length = controls.length;
-    			var width = controls.width;
+          totalHeight/=height;
+
+    			var length = 4;
+    			var width = 8;
     			var rotationAngle = controls.Angle;
-    			var selectedColor = 'red';
+          rotationAngle/=height;
 
     			var cubeGeometry = new THREE.CubeGeometry(length,1,width);
 
 
     			var combined = new THREE.Geometry();
 
-    				var step, stair, spindle, steps_con, plate, rail;
+    				var step, stairs, spindle, steps_con, plate, rail;
             var spoints, cpoints;
             var ox, oy, oz;
 
     				var numOfStairs = height;
-    				y = 1/2;
+    				y = 1.5;
     				angle = 0;
             var angle2 = 0;
             var angle3 = 0;
@@ -147,22 +189,29 @@
 
     					for (var i = 0; i < numOfStairs; i++) {
                 //STEP creation
-                stair = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    						stair.castShadow = true;
+                // stair = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    						// stair.castShadow = true;
 
                 xPOS = 4;
                 zPOS = width/2;
 
-    						stair.position.x=xPOS;
-    						stair.position.y=y;
-    						stair.position.z=zPOS;
-
-
+                //Add stair
+                if(i % 2 == 0){
+                    stairs = new THREE.Mesh(extrudeGeometry, extrudeMaterial);
+                }else{
+                    stairs = new THREE.Mesh(extrudeGeometry2, extrudeMaterial);
+                }
+                stairs.castShadow = true;
+                stairs.rotation.x=(Math.PI/180)*270;
+                stairs.rotation.z=(Math.PI/180)*90;
+                stairs.position.x=xPOS;
+                stairs.position.y=y+3.5;
+                stairs.position.z=zPOS;
 
                 //STEPS construct
                 cpoints = [];
                 cpoints.push(new THREE.Vector3(xPOS, y-0.5, zPOS));
-                cpoints.push(new THREE.Vector3(xPOS, y-2.5, zPOS));
+                cpoints.push(new THREE.Vector3(xPOS, y-0.75-totalHeight, zPOS));
 
                 var zpindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(cpoints), 20, 0.5, 8, false);
                 steps_con = new THREE.Mesh(zpindleGeometry, tubeMaterial);
@@ -171,7 +220,7 @@
                 plate = new THREE.Mesh(plateGeometry, plateMaterial);
                 plate.castShadow = true;
                 plate.position.x=xPOS-2;
-                plate.position.y=y-2.75;
+                plate.position.y=y-totalHeight-0.75;
                 plate.position.z=zPOS;
 
 
@@ -180,8 +229,8 @@
                 else spindleZ = 0.3;
 
                 spoints = [];
-                spoints.push(new THREE.Vector3(xPOS, y, spindleZ));
-                spoints.push(new THREE.Vector3(xPOS, y+6, spindleZ));
+                spoints.push(new THREE.Vector3(xPOS+1, y, spindleZ));
+                spoints.push(new THREE.Vector3(xPOS+1, y+6.5, spindleZ));
 
                 var spindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(spoints), 20, 0.21, 8, false);
                 spindle = new THREE.Mesh(spindleGeometry, tubeMaterial);
@@ -193,16 +242,16 @@
 
                 var p2 = new THREE.Object3D();
                 if (rotationAngle>=0){
-                  p2.position.set(xPOS,y+6,spindleZ/2);
+                  p2.position.set(xPOS+1,y+6.5,spindleZ/2);
                 }
                 else {
-                  p2.position.set(xPOS,y+6,-zPOS+0.3);
+                  p2.position.set(xPOS+1,y+6.5,-zPOS+0.3);
                 }
 
                 //Translation
                 var d = -width/2;
                 plate.translateZ(d);
-                stair.translateZ(d);
+                stairs.translateZ(d);
                 spindle.translateZ(d);
                 steps_con.translateZ(d);
 
@@ -210,7 +259,7 @@
                 //First addition
                 step = new THREE.Object3D();
 
-    						step.add(stair);
+    						step.add(stairs);
                 if (i!=0) {
                   step.add(plate);
                   step.add(steps_con);
@@ -221,8 +270,8 @@
                 if (i!=0) step.add(spindle);
 
 
-                var Axes = new THREE.AxisHelper( 4 );
-                step.add(Axes);
+                // var Axes = new THREE.AxisHelper( 4 );
+                // step.add(Axes);
 
 
                 //Rotation
@@ -246,7 +295,9 @@
 
                 //Final addition
     						group.add(step);
-                temp+=2;
+                if (totalHeight) temp = temp + totalHeight;
+                else
+                  temp+=2;
     					}
 
     				scene.add(group);
@@ -255,27 +306,32 @@
             spoints = [];
 
             if (angle<0) {
-              spoints.push(new THREE.Vector3(4,0,-zPOS+0.3));
-              spoints.push(new THREE.Vector3(4,6,-zPOS+0.3));
+              spoints.push(new THREE.Vector3(4,0.5,-zPOS+0.3));
+              spoints.push(new THREE.Vector3(5,7,-zPOS+0.3));
 
               points.shift();
-              points.unshift(new THREE.Vector3(4,6,-zPOS+0.3));
+              points.unshift(new THREE.Vector3(5,7,-zPOS+0.3));
               points.unshift(new THREE.Vector3(2,5,-zPOS+0.3));
               points.unshift(new THREE.Vector3(2,4,-zPOS+0.3));
             }
             else {
-              spoints.push(new THREE.Vector3(4,0,zPOS-0.3));
-              spoints.push(new THREE.Vector3(4,6,zPOS-0.3));
+              spoints.push(new THREE.Vector3(5,0.5,zPOS-0.3));
+              spoints.push(new THREE.Vector3(5,7,zPOS-0.3));
 
+              points.shift();
+              points.unshift(new THREE.Vector3(5,7,zPOS-0.3));
               points.unshift(new THREE.Vector3(2,5,zPOS-0.3));
               points.unshift(new THREE.Vector3(2,4,zPOS-0.3));
             }
 
             //add first spindle
             var spindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(spoints), 20, 0.21, 8, false);
-            spindle = new THREE.Mesh(spindleGeometry, tubeMaterial);
-            spindle.castShadow = true;
-            scene.add(spindle);
+            var fspindle = new THREE.Mesh(spindleGeometry, tubeMaterial);
+            fspindle.name = 'first_spindle';
+            var o = scene.getObjectByName('first_spindle')
+            fspindle.castShadow = true;
+            scene.remove(o);
+            scene.add(fspindle);
 
 
             var curve = new THREE.SplineCurve3(points);
@@ -285,15 +341,23 @@
             scene.add(tube);
 
             //add the second plane
-            var planeGeometry2 = new THREE.PlaneGeometry(10,10);
+            var planeGeometry2 = new THREE.PlaneGeometry(10,20);
             var plane2;
 
             plane2 = new THREE.Mesh(planeGeometry2,planeMaterial);
             plane2.receiveShadow  = true;
             plane2.rotation.x=-0.5*Math.PI;
-            plane2.position.x=vector.x+length*2-1;
-            plane2.position.y=vector.y+0.25;
+            plane2.position.x=vector.x;
+            plane2.position.y=vector.y+0.5;
             plane2.position.z=vector.z;
+
+
+            plane2.name = 'second_plane';
+            o = scene.getObjectByName('second_plane')
+            scene.remove(o);
+
+            plane2.rotateZ((angle-rotationAngle)*Math.PI/180);
+            plane2.translateX(7);
 
             scene.add(plane2);
 
