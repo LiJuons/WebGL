@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+   <meta charset="utf-8"/>
+   <title>Toro Teksturos</title>
+   <script type="text/javascript" src="http://cdn.rawgit.com/mrdoob/three.js/master/build/three.js"></script>
+   <script type="text/javascript" src="./libs/ParametricGeometries.js"></script>
+   <script type="text/javascript" src="./libs/ConvexGeometry.js"></script>
+   <script type="text/javascript" src="./libs/jquery-1.9.0.js"></script>
+   <script type="text/javascript" src="./libs/stats.js"></script>
+   <script type="text/javascript" src="./libs/dat.gui.js"></script>
+   <script type="text/javascript" src="./libs/slice.min.js"></script>
+   <script type="text/javascript" src="./libs/OrbitControls.js"></script>
+   <style>
+       body{
+           /* set margin to 0 and overflow to hidden, to go fullscreen */
+           margin: 0;
+           overflow: hidden;
+       }
+   </style>
+</head>
+<body>
+
+<div id="Stats-output">
+</div>
+<!-- Div which will hold the Output -->
+<div id="WebGL-output">
+</div>
+
+<!-- Javascript code that runs our Three.js examples -->
+<script type="text/javascript">
+
+    // once everything is loaded, we run our Three.js stuff.
+    $(function () {
+
+        var stats = initStats();
+
+        // create a scene, that will hold all our elements such as objects, cameras and lights.
+        var scene = new THREE.Scene();
+
+        // create a camera, which defines where we're looking at.
+        var camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        var camcontrols = new THREE.OrbitControls( camera );
+        camera.position.set( 10, 40, 40 );
+        camcontrols.update();
+
+        // create a render and set the size
+        var renderer = new THREE.WebGLRenderer();
+
+        renderer.setClearColor(0xEEEEEE, 1.0);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMapEnabled = true;
+
+        // create the ground plane
+        var planeGeometry = new THREE.PlaneGeometry(300,200,1,1);
+        var planeMaterial =    new THREE.MeshLambertMaterial({color: 0xffffff});
+        var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+        plane.receiveShadow  = true;
+
+        // rotate and position the plane
+        plane.rotation.x=-0.5*Math.PI;
+        plane.position.x=0
+        plane.position.y=0
+        plane.position.z=0
+
+        // add the plane to the scene
+        scene.add(plane);
+
+        // position and point the camera to the center of the scene
+        camera.position.x = -50;
+        camera.position.y = 30;
+        camera.position.z = 20;
+        camera.lookAt(new THREE.Vector3(-10,0,0));
+
+        // add subtle ambient lighting
+        var ambientLight = new THREE.AmbientLight(0x090909);
+        scene.add(ambientLight);
+
+        // add spotlight for the shadows
+        var spotLight = new THREE.SpotLight( 0xffffff );
+        spotLight.position.set(40, 60, 80 );
+        spotLight.castShadow = true;
+        scene.add( spotLight );
+
+        var spotLight2 = new THREE.SpotLight( 0xffffff );
+        spotLight2.position.set(-90, 60, -30 );
+        spotLight2.castShadow = true;
+        scene.add( spotLight2 );
+
+
+        // add the output of the renderer to the html element
+        $("#WebGL-output").append(renderer.domElement);
+
+        // call the render function
+        var step=0
+
+        var options = {
+           steps: 2,
+           amount: 1,
+           bevelEnabled: false,
+           bevelThickness: 1,
+           bevelSize: 1,
+           bevelSegments: 1
+        };
+
+        buildhouse();
+
+        buildstairs(15,31,290);
+
+        render();
+
+        function buildhouse() {
+
+          let houseHeight = 30;
+
+          var ground = new THREE.Mesh(new THREE.CubeGeometry(80,1,80), new THREE.MeshLambertMaterial({color: 0xaaaaaa}));
+          ground.position.x = -20;
+          ground.position.z = 10;
+          scene.add(ground);
+
+          drawRoof();
+
+          createWall (-60,0,-30,      // position x,y,z
+            0, 0,  0,                 // angleY, angleX
+            0, 80, houseHeight,       // shape size,x,y
+            20, 50, 10);              // hole size,x,y
+
+          createWall (-60,0,50,       // position x,y,z
+            90, 0, 0,                 // angleY, angleX
+            0, 80, houseHeight,       // shape size,x,y
+            20, 30, 0);               // hole size,x,y
+
+          createWall (-60,0,50,       // position x,y,z
+            0, 0, 0,                  // angleY, angleX
+            0, 80, houseHeight,       // shape size,x,y
+            20, 50, 10);              // hole size,x,y
+
+          createWall (19,0,50,        // position x,y,z
+            90, 0, 0,                 // angleY, angleX
+            0, 80, houseHeight,       // shape size,x,y
+            20, 50, 10);              // hole size,x,y
+
+          var ceiling =
+          createWall (19.9,0,-30,        // position x,y,z
+            180, 90, 0xaaaaaa,          // angleY, angleX
+            0, 79.5, 81,       // shape size,x,y
+            34, 5, 2);              // hole size,x,y
+
+          ceiling.position.y=30;
+
+          putWindow(30, 10, 19.5, 15, 15, 0);
+          putWindow(30, 10, -25, 15, 50, 90);
+          putWindow(30, 10, -25, 15, -30, 90);
+          putWindow(32, 12, 19.5, 45, 11, 0);
+          putWindow(32, 12, -59.3, 45, 11, 0);
+
+          var doors = createMesh(new THREE.CubeGeometry(0.5,20,10), 'doors.jpg');
+          doors.position.x = -60;
+          doors.position.y = 10;
+          doors.position.z = 25;
+          doors.rotation.y = 0 * Math.PI / 180;
+          scene.add ( doors );
+
+        }
+
+        function putWindow(length, height, x, y, z, angle) {
+
+          var window = createMesh(new THREE.CubeGeometry(0.5,height,length), 'window.jpg', true);
+          window.position.x = x;
+          window.position.y = y;
+          window.position.z = z;
+          window.rotation.y = angle * Math.PI / 180;
+          scene.add ( window );
+
+        }
+
+        function drawRoof() {
+          var roof1 = createMesh(new THREE.CubeGeometry(90,1,70), 'roof.jpg');
+          roof1.position.x = -20;
+          roof1.position.y = 47;
+          roof1.position.z = -14;
+          roof1.rotation.x = -0.25 * Math.PI;
+          scene.add(roof1);
+
+          var roof2 = createMesh(new THREE.CubeGeometry(90,1,70), 'roof.jpg');
+          roof2.position.x = -20;
+          roof2.position.y = 47;
+          roof2.position.z = 35;
+          roof2.rotation.x = 0.25 * Math.PI;
+          scene.add(roof2);
+
+
+          var shape = new THREE.Shape();
+          shape.moveTo( 19,20 );
+          shape.lineTo( 60.5,61 );
+          shape.lineTo( 102,20 );
+          shape.lineTo( 20,20  );
+
+          var hole1 = new THREE.Path();
+          var x = 5;
+          var y = 5;
+      		hole1.moveTo(40+x, 25+y);
+      		hole1.lineTo(40+x, 35+y);
+      		hole1.lineTo(70+x, 35+y);
+      		hole1.lineTo(70+x, 25+y);
+      		hole1.lineTo(40+x, 25+y);
+      		shape.holes.push(hole1);
+
+          var geom = new THREE.ExtrudeBufferGeometry( shape, options );
+
+          var material = new THREE.MeshPhongMaterial( {color: 0xb9b875} );
+
+          var roof3 = new THREE.Mesh( geom, material );
+
+          roof3.position.x=19;
+          roof3.position.y=10;
+          roof3.position.z=71;
+          roof3.rotation.y = 0.5 * Math.PI;
+          scene.add( roof3 );
+
+          var shape2 = new THREE.Shape();
+          shape2.moveTo( 19,20 );
+          shape2.lineTo( 60.5,61 );
+          shape2.lineTo( 102,20 );
+          shape2.lineTo( 20,20  );
+
+          var hole2 = new THREE.Path();
+      		hole2.moveTo(40+x, 25+y);
+      		hole2.lineTo(40+x, 35+y);
+      		hole2.lineTo(70+x, 35+y);
+      		hole2.lineTo(70+x, 25+y);
+      		hole2.lineTo(40+x, 25+y);
+      		shape2.holes.push(hole2);
+
+          var geom = new THREE.ExtrudeBufferGeometry( shape2, options );
+
+          var roof4 = new THREE.Mesh( geom, material );
+
+          roof4.position.x=-60;
+          roof4.position.y=10;
+          roof4.position.z=71;
+          roof4.rotation.y = 0.5 * Math.PI;
+          scene.add( roof4 );
+
+        }
+
+        function createWall (x,y,z, angleY, angleX, wallcolor, s1, s2, s3, h1, h2, h3) {
+
+          var shape = createShape(s1,s2,s3);
+      		var hole = pushHole(h1,h2,h3);
+      		shape.holes.push(hole);
+
+          if (wallcolor)  material = new THREE.MeshPhongMaterial( {color: 0xa68c52} );
+          else
+            material = new THREE.MeshPhongMaterial( {color: 0xb9b875} )
+
+          geometry = new THREE.ExtrudeBufferGeometry( shape, options );
+
+          mesh = new THREE.Mesh( geometry, material );
+
+          mesh.position.x= x;
+          mesh.position.z= z;
+
+          mesh.rotation.y = angleY * Math.PI / 180;
+          mesh.rotation.x = angleX * Math.PI / 180;
+
+          scene.add( mesh );
+
+          return mesh;
+        }
+
+        function createShape(start, length, height) {
+          var shape = new THREE.Shape();
+          shape.moveTo( start,start );
+          shape.lineTo( length,start );
+          shape.lineTo( length,height );
+          shape.lineTo( start,height  );
+          shape.lineTo( start, start );
+
+          return shape;
+        }
+
+        function pushHole(start, length, height) {
+          var hole1 = new THREE.Path();
+      		hole1.moveTo(start,start);
+      		hole1.lineTo(start,height);
+      		hole1.lineTo(length,height);
+      		hole1.lineTo(length,start);
+      		hole1.lineTo(start,start);
+          return hole1;
+        }
+
+
+        function createMesh(geom, imageFile, transparent ) {
+            var texture = THREE.ImageUtils.loadTexture("./textures/" + imageFile)
+            if (transparent)
+              var mat = new THREE.MeshPhongMaterial( { transparent: true, opacity: 0.5 });
+            else var mat = new THREE.MeshPhongMaterial();
+            mat.map = texture;
+
+            var mesh = new THREE.Mesh(geom, mat);
+            return mesh;
+        }
+
+        function render() {
+            stats.update();
+            camcontrols.update();
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+
+        function initStats() {
+
+            var stats = new Stats();
+
+            stats.setMode(0); // 0: fps, 1: ms
+
+            // Align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '0px';
+            stats.domElement.style.top = '0px';
+
+            $("#Stats-output").append( stats.domElement );
+
+            return stats;
+        }
+
+        function buildstairs(getsteps, getheight, getangle) {
+
+          var group, stair;
+
+          var tubeMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
+          var plateMaterial = new THREE.MeshPhongMaterial( {color: 0x7a7a7a} );
+          var plateGeometry = new THREE.CubeGeometry(5,0.5,1);
+
+          function drawStair() {
+
+              stair = new THREE.Shape();
+
+              stair.moveTo( 0,0 );
+              stair.bezierCurveTo(0,0,8,4,8,0);
+              stair.lineTo( 8, -2 );
+              stair.lineTo( 0, -2 );
+              stair.lineTo( 0, 0 );
+
+              return stair;
+          }
+
+          function drawStair2() {
+
+              stair = new THREE.Shape();
+
+              stair.moveTo( 0,0 );
+              stair.bezierCurveTo(0,0,0,4,8,0);
+              stair.lineTo( 8, -2 );
+              stair.lineTo( 0, -2 );
+              stair.lineTo( 0, 0 );
+
+              return stair;
+          }
+
+          var extrudeSettings = {
+              steps: 10,
+              amount: 1,
+              curveSegments: 10,
+              bevelEnabled: false,
+              bevelThickness: 1,
+              bevelSize: 1,
+              bevelSegments: 1
+          };
+
+        var extrudeGeometry = new THREE.ExtrudeGeometry(drawStair(), extrudeSettings);
+        var extrudeGeometry2 = new THREE.ExtrudeGeometry(drawStair2(), extrudeSettings);
+        var extrudeMaterial = new THREE.MeshLambertMaterial({color: 0xf69f57});
+
+        var totalHeight1 = getheight;
+        var height = getsteps;
+        var rotationAngle1 = getangle;
+
+        group = new THREE.Object3D();
+
+        totalHeight = totalHeight1 / height;
+        rotationAngle = rotationAngle1 / height;
+
+        var length = 4;
+        var width = 8;
+
+
+        var cubeGeometry = new THREE.CubeGeometry(length,1,width);
+
+        var step, stairs, spindle, steps_con, plate, rail;
+        var spoints, cpoints;
+        var ox, oy, oz;
+
+        var numOfStairs = height;
+        y = 1.5;
+        angle = 0;
+        var angle2 = 0;
+        var angle3 = 0;
+        var temp = 0;
+        var xPOS, zPOS;
+        var points = [];
+        var vector = null;
+        var vector2 = null;
+
+
+          for (var i = 0; i < numOfStairs; i++) {
+            xPOS = 4;
+            zPOS = width/2;
+
+            //Add stair
+            if(i % 2 == 0){
+                stairs = new THREE.Mesh(extrudeGeometry, extrudeMaterial);
+            }else{
+                stairs = new THREE.Mesh(extrudeGeometry2, extrudeMaterial);
+            }
+            //stairs.castShadow = true;
+            stairs.rotation.x=(Math.PI/180)*270;
+            stairs.rotation.z=(Math.PI/180)*90;
+            stairs.position.x=xPOS;
+            stairs.position.y=y+3.5;
+            stairs.position.z=zPOS;
+
+            //Stairs supportive construct
+            cpoints = [];
+            cpoints.push(new THREE.Vector3(xPOS, y-0.5, zPOS));
+            cpoints.push(new THREE.Vector3(xPOS, y-0.75-totalHeight, zPOS));
+
+            var zpindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(cpoints), 20, 0.5, 8, false);
+            steps_con = new THREE.Mesh(zpindleGeometry, tubeMaterial);
+            //steps_con.castShadow = true;
+
+            plate = new THREE.Mesh(plateGeometry, plateMaterial);
+            //plate.castShadow = true;
+            plate.position.x=xPOS-2;
+            plate.position.y=y-totalHeight-0.75;
+            plate.position.z=zPOS;
+
+
+            //SPINDLE creation
+            if (angle>=0) spindleZ = zPOS*2-0.3;
+            else spindleZ = 0.3;
+
+            spoints = [];
+            spoints.push(new THREE.Vector3(xPOS+1, y, spindleZ));
+            spoints.push(new THREE.Vector3(xPOS+1, y+6.5, spindleZ));
+
+            var spindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(spoints), 20, 0.21, 8, false);
+            spindle = new THREE.Mesh(spindleGeometry, tubeMaterial);
+            //spindle.castShadow = true;
+
+            //Generate points
+            var p = new THREE.Object3D();
+            p.position.set(xPOS,y,0);
+
+            var p2 = new THREE.Object3D();
+            if (rotationAngle>=0){
+              p2.position.set(xPOS+1,y+6.5,spindleZ/2);
+            }
+            else {
+              p2.position.set(xPOS+1,y+6.5,-zPOS+0.3);
+            }
+
+            //Translation
+            var d = -width/2;
+            plate.translateZ(d);
+            stairs.translateZ(d);
+            spindle.translateZ(d);
+            steps_con.translateZ(d);
+
+
+            //First addition
+            step = new THREE.Object3D();
+
+            step.add(stairs);
+            if (i!=0) {
+              step.add(plate);
+              step.add(steps_con);
+              step.add(plate);
+            }
+            step.add(p);
+            step.add(p2);
+            if (i!=0) step.add(spindle);
+
+            // var Axes = new THREE.AxisHelper( 4 );
+            // step.add(Axes);
+
+            //Rotation
+            if (vector) {
+              step.translateX(vector.x);
+              step.translateZ(vector.z);
+            }
+            step.translateY(temp);
+
+            step.rotation.y=(angle * Math.PI / 180);
+
+            angle = angle + rotationAngle;
+
+            step.updateMatrixWorld();
+            vector = new THREE.Vector3();
+            vector.getPositionFromMatrix( p.matrixWorld );
+
+            vector2 = new THREE.Vector3();
+            vector2.getPositionFromMatrix( p2.matrixWorld );
+            points.push(vector2);
+
+            //Final addition
+            group.add(step);
+            if (totalHeight) temp = temp + totalHeight;
+            else temp+=2;
+          }
+
+          scene.add(group);
+
+          //Add rail
+          spoints = [];
+
+          if (angle<0) {
+            spoints.push(new THREE.Vector3(4,0.5,-zPOS+0.3));
+            spoints.push(new THREE.Vector3(5,7,-zPOS+0.3));
+
+            points.shift();
+            points.unshift(new THREE.Vector3(5,7,-zPOS+0.3));
+            points.unshift(new THREE.Vector3(3,5,-zPOS+0.3));
+            points.unshift(new THREE.Vector3(2,3,-zPOS+0.3));
+          }
+          else {
+            spoints.push(new THREE.Vector3(5,0.5,zPOS-0.3));
+            spoints.push(new THREE.Vector3(5,7,zPOS-0.3));
+
+            points.shift();
+            points.unshift(new THREE.Vector3(5,7,zPOS-0.3));
+            points.unshift(new THREE.Vector3(3,5,zPOS-0.3));
+            points.unshift(new THREE.Vector3(2,3,zPOS-0.3));
+          }
+
+        //add first spindle
+        var spindleGeometry = new THREE.TubeGeometry(new THREE.SplineCurve3(spoints), 20, 0.21, 8, false);
+        var fspindle = new THREE.Mesh(spindleGeometry, tubeMaterial);
+        fspindle.name = 'first_spindle';
+        var o = scene.getObjectByName('first_spindle')
+        //fspindle.castShadow = true;
+        scene.remove(o);
+        scene.add(fspindle);
+
+
+        var curve = new THREE.SplineCurve3(points);
+        var tubeGeomtery = new THREE.TubeGeometry(curve, 64, 0.3, 8, false);
+        tube = new THREE.Mesh(tubeGeomtery, tubeMaterial);
+        //tube.castShadow = true;
+        scene.add(tube);
+
+        //add the second plane
+        var plane2 = new THREE.Mesh(new THREE.CubeGeometry(39,1,12), new THREE.MeshPhongMaterial( {color: 0xa68c52} ));
+
+        plane2.receiveShadow  = true;
+        plane2.position.x=vector.x-1.5;
+        plane2.position.y=vector.y+0.065;
+        plane2.position.z=vector.z+8;
+        plane2.material.side = THREE.DoubleSide;
+
+
+        plane2.name = 'second_plane';
+        o = scene.getObjectByName('second_plane')
+        scene.remove(o);
+
+        plane2.translateX(7);
+
+        scene.add(plane2);
+
+
+      }
+    });
+
+
+
+</script>
+
+
+
+
+</body>
+</html>
